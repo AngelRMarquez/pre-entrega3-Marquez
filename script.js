@@ -9,74 +9,91 @@ document.addEventListener('DOMContentLoaded', function () {
     { id: 7, nombre: 'Airpord 3ra Generacion', precio: 30.000, imagen: 'img/airp-3ra-gen.jpg' },
     { id: 8, nombre: 'Cargador Original 5w', precio: 15.000, imagen: 'img/cargador-original-iphone-5w-5v.jpg' },
     { id: 9, nombre: 'Cargador Original 20w', precio: 20.000, imagen: 'img/cargador-original-iphone-20.jpg' },
-  ];
-
-  const carrito = [];
-
-  function mostrarProductos() {
-    const productList = document.getElementById('product-list');
-
-    productos.forEach(producto => {
-      const productElement = document.createElement('div');
-      productElement.className = 'product';
-      productElement.innerHTML = `
-        <h3>${producto.nombre}</h3>
-        <img src="${producto.imagen}" alt="${producto.nombre}" style="max-width: 100px; max-height: 100px;">
-        <p>Precio: $${producto.precio.toFixed(2)}</p>
-        <button onclick="agregarAlCarrito(${producto.id})">Agregar al carrito</button>
-      `;
-
-      productList.appendChild(productElement);
-    });
-  }
-
-  window.agregarAlCarrito = function (id) {
-    const selectedProduct = productos.find(producto => producto.id === id);
-
+  ];  
+    const carrito = [];
   
-    const existingItem = carrito.find(item => item.id === id);
-
-    if (existingItem) {
-      existingItem.cantidad++;
-    } else {
-      carrito.push({ ...selectedProduct, cantidad: 1 });
+    function mostrarProductos() {
+      const productList = document.getElementById('product-list');
+  
+      productos.forEach(producto => {
+        const productElement = document.createElement('div');
+        productElement.className = 'product';
+        productElement.innerHTML = `
+          <h3>${producto.nombre}</h3>
+          <img src="${producto.imagen}" alt="${producto.nombre}" style="max-width: 100px; max-height: 100px;">
+          <p>Precio: $${producto.precio.toFixed(2)}</p>
+          <button onclick="agregarAlCarrito(${producto.id})">Agregar al carrito</button>
+        `;
+  
+        productList.appendChild(productElement);
+      });
     }
+  
+    window.agregarAlCarrito = function (id) {
+      const selectedProduct = productos.find(producto => producto.id === id);
+      const existingItem = carrito.find(item => item.id === id);
+  
+      if (existingItem) {
+        existingItem.cantidad++;
+      } else {
+        carrito.push({ ...selectedProduct, cantidad: 1 });
+      }
+  
+      actualizarCarrito();
+      calcularTotal();
+      console.log(`Producto agregado al carrito: ${selectedProduct.nombre}`);
+    };
+  
+    function actualizarCarrito() {
+      const cartItems = document.getElementById('cart-items');
+  
+      if (cartItems) {
+        cartItems.innerHTML = '';
+  
+        carrito.forEach(item => {
+          const listItem = document.createElement('li');
+          listItem.textContent = `${item.nombre} - Cantidad: ${item.cantidad} - $${(item.precio * item.cantidad).toFixed(2)}`;
+          cartItems.appendChild(listItem);
+        });
+      }
+    }
+  
+    function calcularTotal() {
+      const totalElement = document.getElementById('total');
+  
+      if (totalElement) {
+        const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+        totalElement.textContent = `Total a pagar: $${total.toFixed(2)}`;
+      }
+    }
+  
+    document.getElementById('btnPagar').addEventListener('click', realizarPago);
+  
+    function realizarPago() {
+      const paymentForm = document.getElementById('payment-form');
+    
+      if (paymentForm) {
+        paymentForm.style.display = 'block';
+      }
+    }
+  
+    
+    document.getElementById('btnConfirmarPago').addEventListener('click', confirmarPago);
 
-    actualizarCarrito();
-    calcularTotal();
-    console.log(`Producto agregado al carrito: ${selectedProduct.nombre}`);
-  };
-
-  function actualizarCarrito() {
-    const cartItems = document.getElementById('cart-items');
-    cartItems.innerHTML = '';
-
-    carrito.forEach(item => {
-      const listItem = document.createElement('li');
-      listItem.textContent = `${item.nombre} - Cantidad: ${item.cantidad} - $${(item.precio * item.cantidad).toFixed(2)}`;
-      cartItems.appendChild(listItem);
-    });
-  }
-
-  function calcularTotal() {
-    const totalElement = document.getElementById('total');
-    const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
-    totalElement.textContent = `Total a pagar: $${total.toFixed(2)}`;
-  }
-
-  function realizarPago() {
-    const paymentForm = document.getElementById('payment-form');
-  paymentForm.style.display = 'block';
-  }
-
-  function confirmarPago() {
+    function confirmarPago() {
     const nombre = document.getElementById('nombre').value;
     const tarjeta = document.getElementById('tarjeta').value;
     const vencimiento = document.getElementById('vencimiento').value;
     const cvv = document.getElementById('cvv').value;
-  
+
+    // Validación básica
+    if (!nombre || !tarjeta || !vencimiento || !cvv) {
+      alert('Por favor, complete todos los campos antes de confirmar el pago.');
+      return;
+    }
+
     console.log('Datos de pago:', nombre, tarjeta, vencimiento, cvv);
-  
+
     const datosPago = {
       nombre,
       tarjeta,
@@ -84,13 +101,13 @@ document.addEventListener('DOMContentLoaded', function () {
       cvv,
       carrito,
     };
-  
+
     localStorage.setItem('datosPago', JSON.stringify(datosPago));
-  
-    alert('Pago realizado con éxito. Datos guardados localmente.');
+
+    // Mensaje de alerta más descriptivo
+    alert(`Pago realizado con éxito. Los datos de ${nombre} han sido guardados localmente.`);
     reiniciarCompra();
   }
-  
 
   function reiniciarCompra() {
     carrito.length = 0;
@@ -99,8 +116,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Ocultar el formulario de pago
     const paymentForm = document.getElementById('payment-form');
-    paymentForm.style.display = 'none';
-  }
 
-  mostrarProductos();
-});
+    if (paymentForm) {
+      paymentForm.style.display = 'none';
+    }
+  }
+  
+    function reiniciarCompra() {
+      carrito.length = 0;
+      actualizarCarrito();
+      calcularTotal();
+  
+      // Ocultar el formulario de pago
+      const paymentForm = document.getElementById('payment-form');
+  
+      if (paymentForm) {
+        paymentForm.style.display = 'none';
+      }
+    }
+  
+    mostrarProductos();
+  });
+  
